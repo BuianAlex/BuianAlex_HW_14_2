@@ -1,21 +1,19 @@
 class Game {
   constructor(){
     this.wraper = document.getElementById('app');
+    this.calcMoves = 0;
     this.rings = [
       {
         name: 3,
-        class: 'ring-1',
-        spindle: 1,
+        class: 'ring-3',
       },
       {
         name: 2,
         class: 'ring-2',
-        spindle: 1,
       },
       {
         name: 1,
-        class: 'ring-3',
-        spindle: 1,
+        class: 'ring-1',
       },
 
     ]
@@ -36,6 +34,7 @@ class Game {
     this.render();
   }
   render(){
+    document.getElementById("calcMoves").innerHTML=this.calcMoves;
     this.wraper.innerHTML = " ";
     for (let spindle of this.spindles ){
       let element = document.createElement("div");
@@ -62,15 +61,17 @@ class Game {
           if(spindle.items.indexOf(item)+1===spindle.items.length){
             canMove = true;
           } 
-          element.prepend(this.createRing(item, canMove));
+          element.prepend(this.createRing(item,spindle.name, canMove));
         } 
         
       }
       
       this.wraper.appendChild(element);
     }
+    console.log(this.calcMoves);
+    
   }
-  createRing(index, canMove){
+  createRing(index, spindle, canMove){
 
     for (let item of this.rings) {
       
@@ -78,6 +79,7 @@ class Game {
         let ring = document.createElement("div");
         ring.className = item.class;
         ring.setAttribute("data", item.name);
+        ring.setAttribute("spindleNumb", spindle);
         if (canMove){
           this.ringDrag(ring);
         }
@@ -94,19 +96,31 @@ class Game {
   }
   dragStart(e) {
     e.dataTransfer.setData('text', this.getAttribute('data')); 
+    e.dataTransfer.setData('spindleNumb', this.getAttribute('spindleNumb'));
   }
   dragEnd(e) {
 
-    console.log(e.target.getAttribute("data"));
   }
+  ///
   dragDrop(e) {
     e.preventDefault();
-    let spindleNumber = e.target.getAttribute("spin");
+    let spindleNumber = parseInt(e.target.getAttribute("spin"));
+    let ringData = parseInt(e.dataTransfer.getData("text"),10)
 
-    
-    for(let spindel of this.spindles){
-      if(spindel.name == spindleNumber){
-        spindel.items.push(parseInt(e.dataTransfer.getData("text"),10));
+    for(let spindelTarget of this.spindles){
+
+      if(spindelTarget.name === spindleNumber){
+         
+        if(spindelTarget.items[spindelTarget.items.length-1]<ringData||spindelTarget.items.length===0){
+         
+          spindelTarget.items.push(ringData);
+          for(let spindleStart of this.spindles){
+            if(spindleStart.name === parseInt(e.dataTransfer.getData("spindleNumb"),10)){
+              spindleStart.items.pop();
+              this.calcMoves++;
+            }
+          }
+        }
       }
     }
     this.render();
